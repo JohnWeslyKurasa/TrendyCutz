@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiSearch, FiFilter, FiEye, FiCheck, FiX, FiTrash2 } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiEye, FiCheck, FiX, FiTrash2, FiCalendar, FiPhone } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import AdminLayout from './AdminLayout';
@@ -149,99 +149,190 @@ export default function AdminAppointments() {
         <p>Manage all customer appointments — {pagination.total} total</p>
       </div>
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      {/* Quick Status Filter Pills */}
+      <div style={{ display: 'flex', gap: '0.375rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+        {STATUSES.map(s => (
+          <button
+            key={s || 'all'}
+            type="button"
+            onClick={() => {
+              const nextFilters = { ...filters, status: s };
+              setFilters(nextFilters);
+              fetchAppointments(1, nextFilters);
+            }}
+            className={`btn btn-sm ${filters.status === s ? 'btn-primary' : 'btn-ghost'}`}
+            style={{ borderRadius: 'var(--radius-full)', textTransform: 'capitalize', fontSize: '0.78rem', whiteSpace: 'nowrap', padding: '4px 12px' }}
+          >
+            {s ? s : 'All Statuses'}
+          </button>
+        ))}
+      </div>
+
+      {/* Responsive Filters */}
+      <div className="admin-filters-bar">
         <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label">Status</label>
-          <select className="form-control" style={{ width: 150 }} value={filters.status} onChange={e => setFilters(f => ({...f, status: e.target.value}))}>
-            <option value="">All Statuses</option>
-            {STATUSES.filter(Boolean).map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label">Worker</label>
-          <select className="form-control" style={{ width: 180 }} value={filters.workerId} onChange={e => setFilters(f => ({...f, workerId: e.target.value}))}>
-            <option value="">All Workers</option>
+          <label className="form-label">Stylist</label>
+          <select className="form-control" value={filters.workerId} onChange={e => setFilters(f => ({...f, workerId: e.target.value}))}>
+            <option value="">All Stylists</option>
             {workers.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
           </select>
         </div>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">Date</label>
-          <input type="date" className="form-control" style={{ width: 160 }} value={filters.date} onChange={e => setFilters(f => ({...f, date: e.target.value}))} />
+          <input type="date" className="form-control" value={filters.date} onChange={e => setFilters(f => ({...f, date: e.target.value}))} />
         </div>
-        <button onClick={applyFilters} className="btn btn-primary btn-sm">
-          <FiFilter size={14} /> Apply
-        </button>
-        <button onClick={() => { setFilters({ status: '', workerId: '', date: '' }); fetchAppointments(1, { status:'', workerId:'', date:'' }); }} className="btn btn-ghost btn-sm">
-          Clear
-        </button>
+        <div className="filter-actions">
+          <button onClick={applyFilters} className="btn btn-primary btn-sm">
+            <FiFilter size={14} /> Filter
+          </button>
+          <button onClick={() => { setFilters({ status: '', workerId: '', date: '' }); fetchAppointments(1, { status:'', workerId:'', date:'' }); }} className="btn btn-ghost btn-sm">
+            Clear
+          </button>
+        </div>
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '4rem' }}><div className="spinner" /></div>
       ) : (
         <>
-          <div className="data-table-wrap">
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Service</th>
-                    <th>Worker</th>
-                    <th>Date & Time</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appointments.length === 0 ? (
-                    <tr><td colSpan={7} style={{ textAlign:'center', color:'var(--secondary)', padding:'3rem' }}>No appointments found</td></tr>
-                  ) : appointments.map(a => (
-                    <tr key={a._id}>
-                      <td style={{ fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent-dark)', fontSize: '0.8rem' }}>{a.appointmentId}</td>
-                      <td>
-                        <div style={{ fontWeight: 600 }}>{a.user?.fullName || a.customerName || '—'}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{a.user?.phone || a.customerPhone}</div>
-                      </td>
-                      <td>{a.service?.name || '—'}</td>
-                      <td>{a.worker?.name || '—'}</td>
-                      <td>
-                        <div style={{ fontWeight: 600 }}>{formatDate(a.date)}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{formatTime(a.time)}</div>
-                      </td>
-                      <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.375rem' }}>
-                          {a.status === 'pending' && (
-                            <button onClick={() => handleStatusUpdate(a._id, 'confirmed')} className="btn btn-success btn-sm" title="Confirm">
-                              <FiCheck size={13} />
-                            </button>
-                          )}
-                          {['pending','confirmed'].includes(a.status) && (
-                            <button onClick={() => handleStatusUpdate(a._id, 'completed')} className="btn btn-accent btn-sm" title="Complete">✓</button>
-                          )}
-                          {['pending','confirmed'].includes(a.status) && (
-                            <button onClick={() => handleStatusUpdate(a._id, 'cancelled')} className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} title="Cancel">
-                              <FiX size={13} />
-                            </button>
-                          )}
-                          <button onClick={() => handleDelete(a._id)} className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} title="Delete">
-                            <FiTrash2 size={13} />
-                          </button>
-                        </div>
-                      </td>
+          {/* Desktop Table View */}
+          <div className="admin-desktop-only">
+            <div className="data-table-wrap">
+              <div className="table-scroll">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Customer</th>
+                      <th>Service</th>
+                      <th>Worker</th>
+                      <th>Date & Time</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {appointments.length === 0 ? (
+                      <tr><td colSpan={7} style={{ textAlign:'center', color:'var(--secondary)', padding:'3rem' }}>No appointments found</td></tr>
+                    ) : appointments.map(a => (
+                      <tr key={a._id}>
+                        <td style={{ fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent-dark)', fontSize: '0.8rem' }}>{a.appointmentId}</td>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{a.user?.fullName || a.customerName || '—'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{a.user?.phone || a.customerPhone}</div>
+                        </td>
+                        <td>{a.service?.name || '—'}</td>
+                        <td>{a.worker?.name || '—'}</td>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{formatDate(a.date)}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{formatTime(a.time)}</div>
+                        </td>
+                        <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '0.375rem' }}>
+                            {a.status === 'pending' && (
+                              <button onClick={() => handleStatusUpdate(a._id, 'confirmed')} className="btn btn-success btn-sm" title="Confirm">
+                                <FiCheck size={13} />
+                              </button>
+                            )}
+                            {['pending','confirmed'].includes(a.status) && (
+                              <button onClick={() => handleStatusUpdate(a._id, 'completed')} className="btn btn-accent btn-sm" title="Complete">
+                                <FiCheck size={13} />
+                              </button>
+                            )}
+                            {['pending','confirmed'].includes(a.status) && (
+                              <button onClick={() => handleStatusUpdate(a._id, 'cancelled')} className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} title="Cancel">
+                                <FiX size={13} />
+                              </button>
+                            )}
+                            <button onClick={() => handleDelete(a._id)} className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} title="Delete">
+                              <FiTrash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
+          </div>
+
+          {/* Mobile Phone Card View */}
+          <div className="admin-mobile-only">
+            {appointments.length === 0 ? (
+              <div className="empty-state" style={{ padding: '3rem 1rem', background: 'white', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ color: 'var(--text-muted)', marginBottom: '0.75rem' }}><FiCalendar size={36} /></div>
+                <p style={{ margin: 0, color: 'var(--secondary)' }}>No appointments found</p>
+              </div>
+            ) : (
+              <div className="admin-mobile-cards">
+                {appointments.map(a => {
+                  const phone = a.user?.phone || a.customerPhone;
+                  return (
+                    <div key={a._id} className="admin-mobile-card">
+                      <div className="admin-mobile-card-top">
+                        <span className="admin-id-badge">{a.appointmentId}</span>
+                        <span className={`badge badge-${a.status}`}>{a.status}</span>
+                      </div>
+
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <div className="admin-mobile-card-title">{a.user?.fullName || a.customerName || 'Customer'}</div>
+                        {phone && (
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: 4 }}>
+                            <a href={`tel:${phone}`} className="call-pill-btn">
+                              <FiPhone size={12} style={{ marginRight: 5 }} /> Call {phone}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="admin-mobile-card-row">
+                        <span className="label">Service</span>
+                        <span className="value">{a.service?.name || '—'} {a.service?.price ? `(₹${a.service.price})` : ''}</span>
+                      </div>
+                      <div className="admin-mobile-card-row">
+                        <span className="label">Stylist</span>
+                        <span className="value">{a.worker?.name || '—'}</span>
+                      </div>
+                      <div className="admin-mobile-card-row">
+                        <span className="label">Date & Time</span>
+                        <span className="value" style={{ color: 'var(--accent-dark)' }}>
+                          {formatDate(a.date)} · {formatTime(a.time)}
+                        </span>
+                      </div>
+
+                      {/* Mobile Touch Action Buttons */}
+                      <div className="admin-mobile-card-actions">
+                        {a.status === 'pending' && (
+                          <button onClick={() => handleStatusUpdate(a._id, 'confirmed')} className="btn btn-success btn-sm">
+                            <FiCheck size={14} /> Confirm
+                          </button>
+                        )}
+                        {['pending', 'confirmed'].includes(a.status) && (
+                          <button onClick={() => handleStatusUpdate(a._id, 'completed')} className="btn btn-accent btn-sm">
+                            <FiCheck size={14} /> Complete
+                          </button>
+                        )}
+                        {['pending', 'confirmed'].includes(a.status) && (
+                          <button onClick={() => handleStatusUpdate(a._id, 'cancelled')} className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)', border: '1px solid rgba(220,53,69,0.2)' }}>
+                            <FiX size={14} /> Cancel
+                          </button>
+                        )}
+                        <button onClick={() => handleDelete(a._id)} className="btn btn-ghost btn-sm btn-icon-only" style={{ color: 'var(--danger)' }} title="Delete">
+                          <FiTrash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Pagination */}
           {pagination.pages > 1 && (
-            <div className="pagination">
+            <div className="pagination" style={{ marginTop: '1rem', justifyContent: 'center' }}>
               <button className="page-btn" disabled={pagination.page === 1} onClick={() => fetchAppointments(pagination.page - 1)}>←</button>
               {[...Array(pagination.pages)].map((_,i) => (
                 <button key={i+1} className={`page-btn${pagination.page === i+1 ? ' active' : ''}`} onClick={() => fetchAppointments(i+1)}>{i+1}</button>

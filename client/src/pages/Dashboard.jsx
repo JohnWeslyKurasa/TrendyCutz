@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiCalendar, FiStar, FiUser, FiLogOut, FiEdit2, FiX } from 'react-icons/fi';
+import { FiCalendar, FiStar, FiUser, FiLogOut, FiEdit2, FiX, FiCheckCircle, FiScissors } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -8,8 +8,19 @@ import { useAuth } from '../context/AuthContext';
 function StarPicker({ value, onChange }) {
   return (
     <div style={{ display: 'flex', gap: '0.5rem' }}>
-      {[1,2,3,4,5].map(n => (
-        <button key={n} type="button" onClick={() => onChange(n)} style={{ fontSize: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: n <= value ? '#F59E0B' : '#D4CFC5', transition: 'var(--transition)' }}>★</button>
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', alignItems: 'center', transition: 'var(--transition)' }}
+        >
+          <FiStar
+            size={24}
+            fill={n <= value ? '#F59E0B' : 'transparent'}
+            color={n <= value ? '#F59E0B' : '#D4CFC5'}
+          />
+        </button>
       ))}
     </div>
   );
@@ -94,7 +105,7 @@ export default function Dashboard() {
           <div>
             <span style={{ fontSize: '0.8rem', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>My Account</span>
             <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', color: 'white', marginTop: '0.25rem' }}>
-              Hello, {user?.fullName?.split(' ')[0]}! 👋
+              Hello, {user?.fullName?.split(' ')[0]}!
             </h1>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -117,7 +128,7 @@ export default function Dashboard() {
           </div>
           <div className="card-body">
             {editProfile ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', maxWidth: 500 }}>
+              <div className="responsive-form-grid" style={{ maxWidth: 500 }}>
                 <div className="form-group">
                   <label className="form-label">Full Name</label>
                   <input className="form-control" value={profileForm.fullName} onChange={e => setProfileForm(f => ({...f, fullName: e.target.value}))} />
@@ -133,7 +144,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                 <div><div className="form-label">Name</div><div style={{ fontWeight: 600 }}>{user?.fullName}</div></div>
                 <div><div className="form-label">Email</div><div style={{ fontWeight: 600 }}>{user?.email}</div></div>
                 <div><div className="form-label">Phone</div><div style={{ fontWeight: 600 }}>{user?.phone}</div></div>
@@ -143,20 +154,25 @@ export default function Dashboard() {
         </div>
 
         {/* Appointment stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.875rem', marginBottom: '2rem' }}>
           {[
-            { label: 'Upcoming', value: upcoming.length, icon: '📅', color: 'var(--info)' },
-            { label: 'Completed', value: appointments.filter(a => a.status === 'completed').length, icon: '✅', color: 'var(--success)' },
-            { label: 'Total Bookings', value: appointments.length, icon: '💇', color: 'var(--accent-dark)' },
-          ].map(s => (
-            <div key={s.label} className="card">
-              <div className="card-body" style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>{s.icon}</div>
-                <div style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 700, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--secondary)' }}>{s.label}</div>
+            { label: 'Upcoming', value: upcoming.length, icon: FiCalendar, color: 'var(--info)' },
+            { label: 'Completed', value: appointments.filter(a => a.status === 'completed').length, icon: FiCheckCircle, color: 'var(--success)' },
+            { label: 'Total Bookings', value: appointments.length, icon: FiScissors, color: 'var(--accent-dark)' },
+          ].map(s => {
+            const IconComponent = s.icon;
+            return (
+              <div key={s.label} className="card">
+                <div className="card-body" style={{ textAlign: 'center', padding: '1rem' }}>
+                  <div style={{ color: s.color, marginBottom: '0.35rem', display: 'flex', justifyContent: 'center' }}>
+                    <IconComponent size={22} />
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', fontWeight: 700, color: s.color }}>{s.value}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--secondary)' }}>{s.label}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Appointments */}
@@ -171,7 +187,7 @@ export default function Dashboard() {
           <div style={{ textAlign: 'center', padding: '3rem' }}><div className="spinner" /></div>
         ) : displayed.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">📅</div>
+            <div className="empty-state-icon" style={{ color: 'var(--text-muted)' }}><FiCalendar size={44} /></div>
             <h3>No Appointments Found</h3>
             <p>Book your first appointment and enjoy a premium salon experience!</p>
             <Link to="/book" className="btn btn-accent">Book Now</Link>
@@ -192,7 +208,7 @@ export default function Dashboard() {
                       with {a.worker?.name} · {formatTime(a.time)} · {a.date}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <div className="appt-actions-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <span className={`badge badge-${a.status}`}>{a.status}</span>
                     {['pending','confirmed'].includes(a.status) && a.date >= today && (
                       <button onClick={() => handleCancel(a._id)} className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}>
@@ -205,7 +221,9 @@ export default function Dashboard() {
                       </button>
                     )}
                     {a.status === 'completed' && a.isReviewed && (
-                      <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600 }}>✓ Reviewed</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <FiCheckCircle size={13} /> Reviewed
+                      </span>
                     )}
                   </div>
                 </div>

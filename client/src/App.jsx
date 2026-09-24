@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute, AdminRoute, PublicRoute } from './components/ProtectedRoute';
+import { FiScissors } from 'react-icons/fi';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -69,7 +70,7 @@ function AppLayout() {
           {/* 404 */}
           <Route path="*" element={
             <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', flexDirection:'column', gap:'1rem', textAlign:'center', padding:'2rem' }}>
-              <div style={{ fontSize:'5rem' }}>✂️</div>
+              <div style={{ color: 'var(--accent-dark)', marginBottom: '0.5rem' }}><FiScissors size={64} /></div>
               <h1 style={{ fontFamily:'var(--font-serif)', fontSize:'3rem' }}>404</h1>
               <p style={{ color:'var(--secondary)' }}>Oops! This page got a bad haircut.</p>
               <a href="/" className="btn btn-primary">Back to Home</a>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FiCalendar, FiUsers, FiStar, FiBriefcase, FiTrendingUp, FiCheck } from 'react-icons/fi';
+import { FiCalendar, FiUsers, FiStar, FiBriefcase, FiTrendingUp, FiCheck, FiPhone } from 'react-icons/fi';
 import api from '../../services/api';
 import AdminLayout from './AdminLayout';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
     { label: 'Active Workers', value: stats.totalWorkers, icon: FiUsers, color: 'accent' },
     { label: 'Pending Hiring', value: stats.pendingHiring, icon: FiBriefcase, color: 'red' },
     { label: 'Total Reviews', value: stats.totalReviews, icon: FiStar, color: 'gold' },
-    { label: 'Avg Rating', value: stats.avgRating ? `${stats.avgRating}★` : '–', icon: FiStar, color: 'gold' },
+    { label: 'Avg Rating', value: stats.avgRating ? `${stats.avgRating} / 5` : '–', icon: FiStar, color: 'gold' },
   ] : [];
 
   const formatDate = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'short' });
@@ -118,47 +118,110 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* Recent Appointments */}
-          <div style={{ marginTop: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem' }}>Recent Appointments</h2>
-              <Link to="/admin/appointments" className="btn btn-ghost btn-sm">View All →</Link>
+          {/* Mobile Quick Action Buttons */}
+          <div className="admin-mobile-only" style={{ marginBottom: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.625rem' }}>
+              <Link to="/admin/appointments" className="btn btn-primary btn-sm" style={{ justifyContent: 'center' }}>
+                <FiCalendar size={15} /> All Appointments
+              </Link>
+              <Link to="/admin/workers" className="btn btn-outline btn-sm" style={{ justifyContent: 'center', background: 'white' }}>
+                <FiUsers size={15} /> Manage Stylists
+              </Link>
             </div>
-            <div className="data-table-wrap">
-              <div className="table-scroll">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Customer</th>
-                      <th>Service</th>
-                      <th>Worker</th>
-                      <th>Date & Time</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentAppts.length === 0 ? (
-                      <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--secondary)', padding: '2rem' }}>No appointments yet</td></tr>
-                    ) : recentAppts.map(a => (
-                      <tr key={a._id}>
-                        <td style={{ fontWeight: 700, color: 'var(--accent-dark)', fontFamily: 'monospace' }}>{a.appointmentId}</td>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{a.user?.fullName || a.customerName || '—'}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{a.user?.phone}</div>
-                        </td>
-                        <td>{a.service?.name || '—'}</td>
-                        <td>{a.worker?.name || '—'}</td>
-                        <td>
-                          <div>{formatDate(a.date)}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{formatTime(a.time)}</div>
-                        </td>
-                        <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
+          </div>
+
+          {/* Recent Appointments */}
+          <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', margin: 0 }}>Recent Appointments</h2>
+              <Link to="/admin/appointments" className="btn btn-ghost btn-sm" style={{ fontWeight: 600 }}>View All →</Link>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="admin-desktop-only">
+              <div className="data-table-wrap">
+                <div className="table-scroll">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Service</th>
+                        <th>Worker</th>
+                        <th>Date & Time</th>
+                        <th>Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {recentAppts.length === 0 ? (
+                        <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--secondary)', padding: '2rem' }}>No appointments yet</td></tr>
+                      ) : recentAppts.map(a => (
+                        <tr key={a._id}>
+                          <td style={{ fontWeight: 700, color: 'var(--accent-dark)', fontFamily: 'monospace' }}>{a.appointmentId}</td>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{a.user?.fullName || a.customerName || '—'}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{a.user?.phone || a.customerPhone}</div>
+                          </td>
+                          <td>{a.service?.name || '—'}</td>
+                          <td>{a.worker?.name || '—'}</td>
+                          <td>
+                            <div>{formatDate(a.date)}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{formatTime(a.time)}</div>
+                          </td>
+                          <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+            </div>
+
+            {/* Mobile Card View for Phone */}
+            <div className="admin-mobile-only">
+              {recentAppts.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2rem 1rem', background: 'white', borderRadius: 'var(--radius-md)' }}>
+                  <p style={{ margin: 0, color: 'var(--secondary)' }}>No appointments yet</p>
+                </div>
+              ) : (
+                <div className="admin-mobile-cards">
+                  {recentAppts.map(a => {
+                    const phone = a.user?.phone || a.customerPhone;
+                    return (
+                      <div key={a._id} className="admin-mobile-card">
+                        <div className="admin-mobile-card-top">
+                          <span className="admin-id-badge">{a.appointmentId}</span>
+                          <span className={`badge badge-${a.status}`}>{a.status}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                          <div>
+                            <div className="admin-mobile-card-title">{a.user?.fullName || a.customerName || 'Guest Customer'}</div>
+                            {phone && (
+                              <a href={`tel:${phone}`} className="call-pill-btn" style={{ marginTop: 3 }}>
+                                <FiPhone size={12} style={{ marginRight: 5 }} /> {phone}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        <div className="admin-mobile-card-row">
+                          <span className="label">Service</span>
+                          <span className="value">{a.service?.name || '—'}</span>
+                        </div>
+                        <div className="admin-mobile-card-row">
+                          <span className="label">Stylist</span>
+                          <span className="value">{a.worker?.name || '—'}</span>
+                        </div>
+                        <div className="admin-mobile-card-row">
+                          <span className="label">Date & Time</span>
+                          <span className="value" style={{ color: 'var(--accent-dark)' }}>
+                            {formatDate(a.date)} at {formatTime(a.time)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </>

@@ -65,7 +65,7 @@ function WorkerModal({ worker, services, onClose, onSave }) {
           <h2>{worker ? 'Edit Worker' : 'Add Worker'}</h2>
           <button onClick={onClose} className="btn btn-ghost btn-icon"><FiX /></button>
         </div>
-        <div className="modal-body" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
+        <div className="modal-body responsive-form-grid">
           <div className="form-group">
             <label className="form-label">Name *</label>
             <input className="form-control" value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} />
@@ -194,11 +194,12 @@ export default function AdminWorkers() {
   return (
     <AdminLayout>
       <div className="admin-page-header">
-        <h1>Workers</h1>
+        <h1>Workers & Stylists</h1>
         <p>Manage your salon team members and their availability.</p>
       </div>
-      <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:'1.5rem' }}>
-        <button onClick={() => setModal('add')} className="btn btn-primary">
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems: 'center', marginBottom:'1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <span style={{ fontSize: '0.85rem', color: 'var(--secondary)', fontWeight: 600 }}>{workers.length} Total Specialists</span>
+        <button onClick={() => setModal('add')} className="btn btn-primary btn-sm">
           <FiPlus size={16} /> Add Worker
         </button>
       </div>
@@ -206,50 +207,104 @@ export default function AdminWorkers() {
       {loading ? (
         <div style={{ textAlign:'center', padding:'4rem' }}><div className="spinner" /></div>
       ) : (
-        <div className="data-table-wrap">
-          <div className="table-scroll">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Role</th>
-                  <th>Specialization</th>
-                  <th>Experience</th>
-                  <th>Rating</th>
-                  <th>Completed</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {workers.map(w => (
-                  <tr key={w._id}>
-                    <td style={{ fontWeight: 600 }}>{w.name}</td>
-                    <td>{w.role}</td>
-                    <td style={{ fontSize: '0.8125rem' }}>{w.specialization}</td>
-                    <td>{w.experience}y</td>
-                    <td>{w.rating.average ? `${w.rating.average}★` : '–'}</td>
-                    <td>{w.completedAppointments}</td>
-                    <td>
-                      <span className={`badge ${w.isActive ? 'badge-confirmed' : 'badge-cancelled'}`}>
-                        {w.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display:'flex', gap:'0.375rem' }}>
-                        <button onClick={() => setModal(w)} className="btn btn-ghost btn-sm"><FiEdit2 size={13} /></button>
-                        <button onClick={() => handleToggle(w)} className="btn btn-ghost btn-sm" title={w.isActive ? 'Deactivate' : 'Activate'}>
-                          {w.isActive ? <FiToggleRight size={16} color="var(--success)" /> : <FiToggleLeft size={16} color="var(--secondary)" />}
-                        </button>
-                        <button onClick={() => handleDelete(w._id)} className="btn btn-ghost btn-sm" style={{ color:'var(--danger)' }}><FiTrash2 size={13} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Desktop Table View */}
+          <div className="admin-desktop-only">
+            <div className="data-table-wrap">
+              <div className="table-scroll">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Role</th>
+                      <th>Specialization</th>
+                      <th>Experience</th>
+                      <th>Rating</th>
+                      <th>Completed</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {workers.map(w => (
+                      <tr key={w._id}>
+                        <td style={{ fontWeight: 600 }}>{w.name}</td>
+                        <td>{w.role}</td>
+                        <td style={{ fontSize: '0.8125rem' }}>{w.specialization}</td>
+                        <td>{w.experience}y</td>
+                        <td>{w.rating.average ? `${w.rating.average} / 5` : '–'}</td>
+                        <td>{w.completedAppointments}</td>
+                        <td>
+                          <span className={`badge ${w.isActive ? 'badge-confirmed' : 'badge-cancelled'}`}>
+                            {w.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display:'flex', gap:'0.375rem' }}>
+                            <button onClick={() => setModal(w)} className="btn btn-ghost btn-sm" title="Edit"><FiEdit2 size={13} /></button>
+                            <button onClick={() => handleToggle(w)} className="btn btn-ghost btn-sm" title={w.isActive ? 'Deactivate' : 'Activate'}>
+                              {w.isActive ? <FiToggleRight size={16} color="var(--success)" /> : <FiToggleLeft size={16} color="var(--secondary)" />}
+                            </button>
+                            <button onClick={() => handleDelete(w._id)} className="btn btn-ghost btn-sm" style={{ color:'var(--danger)' }} title="Delete"><FiTrash2 size={13} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile Phone Card View */}
+          <div className="admin-mobile-only">
+            <div className="admin-mobile-cards">
+              {workers.map(w => (
+                <div key={w._id} className="admin-mobile-card">
+                  <div className="admin-mobile-card-top">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-light)', color: 'var(--accent-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.95rem' }}>
+                        {w.name.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="admin-mobile-card-title">{w.name}</div>
+                        <div className="admin-mobile-card-sub">{w.role}</div>
+                      </div>
+                    </div>
+                    <span className={`badge ${w.isActive ? 'badge-confirmed' : 'badge-cancelled'}`}>
+                      {w.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  <div className="admin-mobile-card-row">
+                    <span className="label">Specialization</span>
+                    <span className="value">{w.specialization || 'General Styling'}</span>
+                  </div>
+                  <div className="admin-mobile-card-row">
+                    <span className="label">Experience</span>
+                    <span className="value">{w.experience} years</span>
+                  </div>
+                  <div className="admin-mobile-card-row">
+                    <span className="label">Rating & Completed</span>
+                    <span className="value">{w.rating.average ? `${w.rating.average} / 5` : 'No ratings yet'} · {w.completedAppointments || 0} done</span>
+                  </div>
+
+                  <div className="admin-mobile-card-actions">
+                    <button onClick={() => setModal(w)} className="btn btn-outline btn-sm">
+                      <FiEdit2 size={14} /> Edit
+                    </button>
+                    <button onClick={() => handleToggle(w)} className={`btn btn-sm ${w.isActive ? 'btn-ghost' : 'btn-success'}`} style={{ border: '1px solid var(--border)' }}>
+                      {w.isActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button onClick={() => handleDelete(w._id)} className="btn btn-ghost btn-sm btn-icon-only" style={{ color: 'var(--danger)' }} title="Delete">
+                      <FiTrash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
       )}
 
       {modal && (

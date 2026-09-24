@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiEye, FiX } from 'react-icons/fi';
+import { FiEye, FiX, FiPhone, FiFileText } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import AdminLayout from './AdminLayout';
@@ -120,12 +120,13 @@ export default function AdminHiring() {
         <p>Manage job applications — {pagination.total} total</p>
       </div>
 
-      <div style={{ display:'flex', gap:'0.75rem', marginBottom:'1.5rem', flexWrap:'wrap' }}>
-        <button onClick={() => { setStatusFilter(''); fetchApplications(1, ''); }} className={`btn btn-sm ${!statusFilter?'btn-primary':'btn-ghost'}`} style={{ borderRadius:'var(--radius-full)' }}>All</button>
+      {/* Horizontal Scrollable Status Tabs */}
+      <div style={{ display:'flex', gap:'0.375rem', marginBottom:'1.5rem', overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+        <button onClick={() => { setStatusFilter(''); fetchApplications(1, ''); }} className={`btn btn-sm ${!statusFilter?'btn-primary':'btn-ghost'}`} style={{ borderRadius:'var(--radius-full)', whiteSpace: 'nowrap' }}>All</button>
         {STATUSES.map(s => (
           <button key={s} onClick={() => { setStatusFilter(s); fetchApplications(1, s); }}
             className={`btn btn-sm ${statusFilter===s?'btn-primary':'btn-ghost'}`}
-            style={{ borderRadius:'var(--radius-full)', textTransform:'capitalize' }}>
+            style={{ borderRadius:'var(--radius-full)', textTransform:'capitalize', whiteSpace: 'nowrap' }}>
             {s.replace('_',' ')}
           </button>
         ))}
@@ -134,58 +135,117 @@ export default function AdminHiring() {
       {loading ? (
         <div style={{ textAlign:'center', padding:'4rem' }}><div className="spinner" /></div>
       ) : (
-        <div className="data-table-wrap">
-          <div className="table-scroll">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Phone</th>
-                  <th>Position</th>
-                  <th>Experience</th>
-                  <th>Salary Exp.</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {applications.length === 0 ? (
-                  <tr><td colSpan={9} style={{ textAlign:'center', color:'var(--secondary)', padding:'3rem' }}>No applications found</td></tr>
-                ) : applications.map(a => (
-                  <tr key={a._id}>
-                    <td style={{ fontFamily:'monospace', fontSize:'0.8rem', fontWeight:700, color:'var(--accent-dark)' }}>{a.applicationId}</td>
-                    <td>
-                      <div style={{ fontWeight:600 }}>{a.fullName}</div>
-                      <div style={{ fontSize:'0.75rem', color:'var(--secondary)' }}>{a.email}</div>
-                    </td>
-                    <td style={{ fontSize:'0.875rem' }}>{a.phone}</td>
-                    <td>{a.position}</td>
-                    <td>{a.experience}y</td>
-                    <td style={{ fontSize:'0.875rem' }}>₹{a.expectedSalary}</td>
-                    <td style={{ fontSize:'0.8rem', color:'var(--secondary)' }}>
-                      {new Date(a.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}
-                    </td>
-                    <td><span className={`badge ${statusColor(a.status)}`}>{a.status.replace('_',' ')}</span></td>
-                    <td>
-                      <button onClick={() => { setSelected(a); setNotes(a.adminNotes||''); }} className="btn btn-ghost btn-sm">
-                        <FiEye size={13} /> View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Desktop Table View */}
+          <div className="admin-desktop-only">
+            <div className="data-table-wrap">
+              <div className="table-scroll">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Phone</th>
+                      <th>Position</th>
+                      <th>Experience</th>
+                      <th>Salary Exp.</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {applications.length === 0 ? (
+                      <tr><td colSpan={9} style={{ textAlign:'center', color:'var(--secondary)', padding:'3rem' }}>No applications found</td></tr>
+                    ) : applications.map(a => (
+                      <tr key={a._id}>
+                        <td style={{ fontFamily:'monospace', fontSize:'0.8rem', fontWeight:700, color:'var(--accent-dark)' }}>{a.applicationId}</td>
+                        <td>
+                          <div style={{ fontWeight:600 }}>{a.fullName}</div>
+                          <div style={{ fontSize:'0.75rem', color:'var(--secondary)' }}>{a.email}</div>
+                        </td>
+                        <td>{a.phone}</td>
+                        <td>{a.position}</td>
+                        <td>{a.experience}y</td>
+                        <td style={{ fontSize:'0.875rem' }}>₹{a.expectedSalary}</td>
+                        <td style={{ fontSize:'0.8rem', color:'var(--secondary)' }}>
+                          {new Date(a.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}
+                        </td>
+                        <td><span className={`badge ${statusColor(a.status)}`}>{a.status.replace('_',' ')}</span></td>
+                        <td>
+                          <button onClick={() => { setSelected(a); setNotes(a.adminNotes||''); }} className="btn btn-ghost btn-sm">
+                            <FiEye size={13} /> View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
+
+          {/* Mobile Phone Card View */}
+          <div className="admin-mobile-only">
+            {applications.length === 0 ? (
+              <div className="empty-state" style={{ padding: '3rem 1rem', background: 'white', borderRadius: 'var(--radius-md)' }}>
+                <p style={{ margin: 0, color: 'var(--secondary)' }}>No applications found</p>
+              </div>
+            ) : (
+              <div className="admin-mobile-cards">
+                {applications.map(a => (
+                  <div key={a._id} className="admin-mobile-card">
+                    <div className="admin-mobile-card-top">
+                      <span className="admin-id-badge">{a.applicationId}</span>
+                      <span className={`badge ${statusColor(a.status)}`}>{a.status.replace('_', ' ')}</span>
+                    </div>
+
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <div className="admin-mobile-card-title">{a.fullName}</div>
+                      <div className="admin-mobile-card-sub">{a.position}</div>
+                      {a.phone && (
+                        <div style={{ marginTop: 4 }}>
+                          <a href={`tel:${a.phone}`} className="call-pill-btn">
+                            <FiPhone size={12} style={{ marginRight: 5 }} /> {a.phone}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="admin-mobile-card-row">
+                      <span className="label">Experience</span>
+                      <span className="value">{a.experience} years</span>
+                    </div>
+                    <div className="admin-mobile-card-row">
+                      <span className="label">Expected Salary</span>
+                      <span className="value">₹{a.expectedSalary}</span>
+                    </div>
+                    <div className="admin-mobile-card-row">
+                      <span className="label">Applied Date</span>
+                      <span className="value">
+                        {new Date(a.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+
+                    <div className="admin-mobile-card-actions">
+                      <button onClick={() => { setSelected(a); setNotes(a.adminNotes||''); }} className="btn btn-primary btn-sm">
+                        <FiEye size={14} /> View Application
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {pagination.pages > 1 && (
-            <div className="pagination">
+            <div className="pagination" style={{ marginTop: '1rem', justifyContent: 'center' }}>
               <button className="page-btn" disabled={pagination.page===1} onClick={() => fetchApplications(pagination.page-1)}>←</button>
               {[...Array(pagination.pages)].map((_,i) => <button key={i+1} className={`page-btn${pagination.page===i+1?' active':''}`} onClick={() => fetchApplications(i+1)}>{i+1}</button>)}
               <button className="page-btn" disabled={pagination.page===pagination.pages} onClick={() => fetchApplications(pagination.page+1)}>→</button>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Application Detail Modal */}
@@ -196,8 +256,8 @@ export default function AdminHiring() {
               <h2>Application: {selected.applicationId}</h2>
               <button onClick={() => setSelected(null)} className="btn btn-ghost btn-icon"><FiX /></button>
             </div>
-            <div className="modal-body" style={{ maxHeight:'60vh', overflowY:'auto' }}>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem', marginBottom:'1.5rem' }}>
+            <div className="modal-body" style={{ maxHeight:'70vh', overflowY:'auto' }}>
+              <div className="responsive-form-grid" style={{ marginBottom:'1.5rem' }}>
                 {[
                   ['Name', selected.fullName],
                   ['Phone', selected.phone],
@@ -235,7 +295,9 @@ export default function AdminHiring() {
               {selected.resume && (
                 <div className="form-group">
                   <label className="form-label">Resume</label>
-                  <a href={`http://localhost:5000${selected.resume}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">📄 View Resume</a>
+                  <a href={`http://localhost:5000${selected.resume}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">
+                    <FiFileText size={14} style={{ marginRight: 5 }} /> View Resume
+                  </a>
                 </div>
               )}
               <div className="divider" />

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiUser, FiPhone, FiMail, FiMapPin, FiUpload, FiCheckCircle, FiScissors } from 'react-icons/fi';
+import { FiUser, FiPhone, FiMail, FiMapPin, FiUpload, FiCheckCircle, FiScissors, FiCheck } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
@@ -155,7 +155,10 @@ export default function Hiring() {
                       {POSITIONS.map(p => (
                         <button key={p} type="button" onClick={() => setForm(f => ({...f, position: p}))}
                           className={`position-card${form.position===p?' selected':''}`}>
-                          {form.position===p ? '✓ ' : ''}{p}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            {form.position === p && <FiCheck size={12} />}
+                            {p}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -227,7 +230,7 @@ export default function Hiring() {
               </div>
 
               <button type="submit" className="btn btn-accent btn-lg w-full" disabled={loading}>
-                {loading ? <><div className="spinner spinner-sm" style={{ borderTopColor: 'white' }} /> Submitting...</> : '🚀 Submit Application'}
+                {loading ? <><div className="spinner spinner-sm" style={{ borderTopColor: 'white' }} /> Submitting...</> : 'Submit Application'}
               </button>
             </div>
           </form>

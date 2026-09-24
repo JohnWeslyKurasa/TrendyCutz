@@ -96,14 +96,14 @@ const PORT = process.env.PORT || 5000;
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
-    console.log('✅ MongoDB connected successfully');
+    console.log('[Database] MongoDB connected successfully');
     app.listen(PORT, () => {
-      console.log(`🚀 Trendy Cutz server running on port ${PORT}`);
-      console.log(`📍 Environment: ${process.env.NODE_ENV}`);
+      console.log(`[Server] Trendy Cutz running on port ${PORT}`);
+      console.log(`[Config] Environment: ${process.env.NODE_ENV}`);
     });
   })
   .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('[Database] MongoDB connection error:', err);
     process.exit(1);
   });
 
