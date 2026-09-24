@@ -5,8 +5,11 @@ import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
+const JWT_SECRET = process.env.JWT_SECRET || 'trendycutz_super_secret_jwt_key_2024_secure_random_string';
+const JWT_EXPIRE = process.env.JWT_EXPIRE || '7d';
+
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
+  return jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRE });
 };
 
 // POST /api/auth/register
