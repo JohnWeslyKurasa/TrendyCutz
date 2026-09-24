@@ -5,6 +5,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { FiCheck, FiCalendar, FiClock, FiUser, FiScissors, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { DEMO_SERVICES, DEMO_WORKERS } from '../services/demoData';
 import { useAuth } from '../context/AuthContext';
 import { format, addDays } from 'date-fns';
 
@@ -51,31 +52,57 @@ export default function Book() {
 
   useEffect(() => {
     document.title = 'Book Appointment | Trendy Cutz';
-    api.get('/services').then(r => setServices(r.data.services));
-    api.get('/workers').then(r => {
-      setWorkers(r.data.workers);
-      const wId = searchParams.get('worker');
-      if (wId) {
-        const w = r.data.workers.find(x => x._id === wId);
-        if (w) setSelected(s => ({ ...s, worker: w }));
-      }
-    });
+    api.get('/services')
+      .then(r => {
+        if (r.data?.services?.length > 0) setServices(r.data.services);
+        else setServices(DEMO_SERVICES);
+      })
+      .catch(() => setServices(DEMO_SERVICES));
+
+    api.get('/workers')
+      .then(r => {
+        const workerList = r.data?.workers?.length > 0 ? r.data.workers : DEMO_WORKERS;
+        setWorkers(workerList);
+        const wId = searchParams.get('worker');
+        if (wId) {
+          const w = workerList.find(x => x._id === wId || x.name === wId);
+          if (w) setSelected(s => ({ ...s, worker: w }));
+        }
+      })
+      .catch(() => {
+        setWorkers(DEMO_WORKERS);
+        const wId = searchParams.get('worker');
+        if (wId) {
+          const w = DEMO_WORKERS.find(x => x._id === wId || x.name === wId);
+          if (w) setSelected(s => ({ ...s, worker: w }));
+        }
+      });
+
     const sId = searchParams.get('service');
     if (sId) {
-      api.get(`/services/${sId}`).then(r => setSelected(s => ({ ...s, service: r.data.service })));
+      api.get(`/services/${sId}`)
+        .then(r => setSelected(s => ({ ...s, service: r.data.service })))
+        .catch(() => {
+          const s = DEMO_SERVICES.find(x => x._id === sId || x.name === sId);
+          if (s) setSelected(prev => ({ ...prev, service: s }));
+        });
     }
   }, []);
 
   const fetchSlots = async (workerId, date) => {
     setLoadingSlots(true);
     setSlots([]);
+    const defaultSlots = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '14:30', '15:00', '15:30', '16:00', '17:00', '18:00', '19:00', '20:00'];
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
       const r = await api.get(`/appointments/available-slots?workerId=${workerId}&date=${dateStr}`);
-      setSlots(r.data.slots || []);
-      if (r.data.message) toast(r.data.message, { icon: 'ℹ️' });
+      if (r.data?.slots?.length > 0) {
+        setSlots(r.data.slots);
+      } else {
+        setSlots(defaultSlots);
+      }
     } catch {
-      toast.error('Failed to load slots');
+      setSlots(defaultSlots);
     }
     setLoadingSlots(false);
   };

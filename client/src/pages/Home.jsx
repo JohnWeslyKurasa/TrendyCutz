@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FiCalendar, FiStar, FiMapPin, FiPhone, FiClock, FiArrowRight, FiScissors, FiCheck, FiAward, FiUsers, FiHeart, FiNavigation, FiPhoneCall } from 'react-icons/fi';
 import { GiRazor, GiHairStrands, GiFlowerEmblem, GiSparkles, GiWaterDrop } from 'react-icons/gi';
 import api from '../services/api';
+import { DEMO_SERVICES, DEMO_WORKERS, DEMO_REVIEWS } from '../services/demoData';
 import heroImg from '../assets/hero.jpg';
 
 const WHY_CARDS = [
@@ -40,9 +41,39 @@ export default function Home() {
   const [loadingR, setLoadingR] = useState(true);
 
   useEffect(() => {
-    api.get('/services').then(r => { setServices(r.data.services.slice(0,5)); setLoadingS(false); }).catch(() => setLoadingS(false));
-    api.get('/workers').then(r => { setWorkers(r.data.workers); setLoadingW(false); }).catch(() => setLoadingW(false));
-    api.get('/reviews?limit=6').then(r => { setReviews(r.data.reviews); setLoadingR(false); }).catch(() => setLoadingR(false));
+    api.get('/services')
+      .then(r => {
+        if (r.data?.services?.length > 0) setServices(r.data.services.slice(0, 6));
+        else setServices(DEMO_SERVICES.slice(0, 6));
+        setLoadingS(false);
+      })
+      .catch(() => {
+        setServices(DEMO_SERVICES.slice(0, 6));
+        setLoadingS(false);
+      });
+
+    api.get('/workers')
+      .then(r => {
+        if (r.data?.workers?.length > 0) setWorkers(r.data.workers.slice(0, 4));
+        else setWorkers(DEMO_WORKERS.slice(0, 4));
+        setLoadingW(false);
+      })
+      .catch(() => {
+        setWorkers(DEMO_WORKERS.slice(0, 4));
+        setLoadingW(false);
+      });
+
+    api.get('/reviews?limit=6')
+      .then(r => {
+        if (r.data?.reviews?.length > 0) setReviews(r.data.reviews.slice(0, 6));
+        else setReviews(DEMO_REVIEWS.slice(0, 6));
+        setLoadingR(false);
+      })
+      .catch(() => {
+        setReviews(DEMO_REVIEWS.slice(0, 6));
+        setLoadingR(false);
+      });
+
     // SEO
     document.title = 'Trendy Cutz | Premium Unisex Salon in Suraram, Hyderabad';
   }, []);

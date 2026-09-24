@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FiClock, FiFilter, FiScissors, FiStar } from 'react-icons/fi';
 import { GiRazor, GiFlowerEmblem, GiWaterDrop } from 'react-icons/gi';
 import api from '../services/api';
+import { DEMO_SERVICES } from '../services/demoData';
 
 const CATEGORIES = ['All', 'Hair', 'Beard', 'Beauty', 'Spa', 'Other'];
 const SERVICE_ICONS = {
@@ -27,7 +28,16 @@ export default function Services() {
 
   useEffect(() => {
     document.title = 'Services | Trendy Cutz';
-    api.get('/services').then(r => { setServices(r.data.services); setLoading(false); }).catch(() => setLoading(false));
+    api.get('/services')
+      .then(r => {
+        if (r.data?.services?.length > 0) setServices(r.data.services);
+        else setServices(DEMO_SERVICES);
+        setLoading(false);
+      })
+      .catch(() => {
+        setServices(DEMO_SERVICES);
+        setLoading(false);
+      });
   }, []);
 
   const filtered = cat === 'All' ? services : services.filter(s => s.category === cat);

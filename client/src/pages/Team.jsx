@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiStar, FiCalendar } from 'react-icons/fi';
 import api from '../services/api';
+import { DEMO_WORKERS } from '../services/demoData';
 
 export default function Team() {
   const [workers, setWorkers] = useState([]);
@@ -9,7 +10,16 @@ export default function Team() {
 
   useEffect(() => {
     document.title = 'Our Team | Trendy Cutz';
-    api.get('/workers').then(r => { setWorkers(r.data.workers); setLoading(false); }).catch(() => setLoading(false));
+    api.get('/workers')
+      .then(r => {
+        if (r.data?.workers?.length > 0) setWorkers(r.data.workers);
+        else setWorkers(DEMO_WORKERS);
+        setLoading(false);
+      })
+      .catch(() => {
+        setWorkers(DEMO_WORKERS);
+        setLoading(false);
+      });
   }, []);
 
   return (

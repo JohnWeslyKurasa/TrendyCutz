@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiStar, FiFilter } from 'react-icons/fi';
 import api from '../services/api';
+import { DEMO_REVIEWS, DEMO_WORKERS } from '../services/demoData';
 import { Link, useSearchParams } from 'react-router-dom';
 
 export default function Reviews() {
@@ -14,7 +15,12 @@ export default function Reviews() {
 
   useEffect(() => {
     document.title = 'Reviews | Trendy Cutz';
-    api.get('/workers').then(r => setWorkers(r.data.workers));
+    api.get('/workers')
+      .then(r => {
+        if (r.data?.workers?.length > 0) setWorkers(r.data.workers);
+        else setWorkers(DEMO_WORKERS);
+      })
+      .catch(() => setWorkers(DEMO_WORKERS));
   }, []);
 
   useEffect(() => {
@@ -28,8 +34,16 @@ export default function Reviews() {
     try {
       const url = wId ? `/reviews?workerId=${wId}&limit=50` : '/reviews?limit=50';
       const { data } = await api.get(url);
-      setReviews(data.reviews);
-    } catch {}
+      if (data?.reviews?.length > 0) {
+        setReviews(data.reviews);
+      } else {
+        const fallback = wId ? DEMO_REVIEWS.filter(r => r.worker?._id === wId || r.worker?.name === wId) : DEMO_REVIEWS;
+        setReviews(fallback);
+      }
+    } catch {
+      const fallback = wId ? DEMO_REVIEWS.filter(r => r.worker?._id === wId || r.worker?.name === wId) : DEMO_REVIEWS;
+      setReviews(fallback);
+    }
     setLoading(false);
   };
 
