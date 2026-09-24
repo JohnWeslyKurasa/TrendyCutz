@@ -1,0 +1,199 @@
+import { useState, useEffect } from 'react';
+import { FiEye, FiX } from 'react-icons/fi';
+import toast from 'react-hot-toast';
+import api from '../../services/api';
+import AdminLayout from './AdminLayout';
+
+const STATUSES = ['pending', 'under_review', 'shortlisted', 'rejected', 'hired'];
+
+export default function AdminHiring() {
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  const [selected, setSelected] = useState(null);
+  const [updating, setUpdating] = useState(false);
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    document.title = 'Hiring | Admin';
+    fetchApplications();
+  }, []);
+
+  const fetchApplications = async (page = 1, sf = statusFilter) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page, limit: 15 });
+      if (sf) params.append('status', sf);
+      const { data } = await api.get(`/admin/hiring?${params}`);
+      setApplications(data.applications);
+      setPagination(data.pagination);
+    } catch { toast.error('Failed to load'); }
+    setLoading(false);
+  };
+
+  const handleUpdateStatus = async (id, status) => {
+    setUpdating(true);
+    try {
+      await api.put(`/admin/hiring/${id}`, { status, adminNotes: notes });
+      toast.success('Application updated');
+      setSelected(prev => ({ ...prev, status, adminNotes: notes }));
+      fetchApplications(pagination.page);
+    } catch { toast.error('Failed to update'); }
+    setUpdating(false);
+  };
+
+  const statusColor = (s) => ({ pending:'badge-pending', under_review:'badge-under_review', shortlisted:'badge-confirmed', rejected:'badge-cancelled', hired:'badge-hired' }[s] || 'badge-pending');
+
+  return (
+    <AdminLayout>
+      <div className="admin-page-header">
+        <h1>Hiring Requests</h1>
+        <p>Manage job applications — {pagination.total} total</p>
+      </div>
+
+      <div style={{ display:'flex', gap:'0.75rem', marginBottom:'1.5rem', flexWrap:'wrap' }}>
+        <button onClick={() => { setStatusFilter(''); fetchApplications(1, ''); }} className={`btn btn-sm ${!statusFilter?'btn-primary':'btn-ghost'}`} style={{ borderRadius:'var(--radius-full)' }}>All</button>
+        {STATUSES.map(s => (
+          <button key={s} onClick={() => { setStatusFilter(s); fetchApplications(1, s); }}
+            className={`btn btn-sm ${statusFilter===s?'btn-primary':'btn-ghost'}`}
+            style={{ borderRadius:'var(--radius-full)', textTransform:'capitalize' }}>
+            {s.replace('_',' ')}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign:'center', padding:'4rem' }}><div className="spinner" /></div>
+      ) : (
+        <div className="data-table-wrap">
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th>Position</th>
+                  <th>Experience</th>
+                  <th>Salary Exp.</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {applications.length === 0 ? (
+                  <tr><td colSpan={9} style={{ textAlign:'center', color:'var(--secondary)', padding:'3rem' }}>No applications found</td></tr>
+                ) : applications.map(a => (
+                  <tr key={a._id}>
+                    <td style={{ fontFamily:'monospace', fontSize:'0.8rem', fontWeight:700, color:'var(--accent-dark)' }}>{a.applicationId}</td>
+                    <td>
+                      <div style={{ fontWeight:600 }}>{a.fullName}</div>
+                      <div style={{ fontSize:'0.75rem', color:'var(--secondary)' }}>{a.email}</div>
+                    </td>
+                    <td style={{ fontSize:'0.875rem' }}>{a.phone}</td>
+                    <td>{a.position}</td>
+                    <td>{a.experience}y</td>
+                    <td style={{ fontSize:'0.875rem' }}>₹{a.expectedSalary}</td>
+                    <td style={{ fontSize:'0.8rem', color:'var(--secondary)' }}>
+                      {new Date(a.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}
+                    </td>
+                    <td><span className={`badge ${statusColor(a.status)}`}>{a.status.replace('_',' ')}</span></td>
+                    <td>
+                      <button onClick={() => { setSelected(a); setNotes(a.adminNotes||''); }} className="btn btn-ghost btn-sm">
+                        <FiEye size={13} /> View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {pagination.pages > 1 && (
+            <div className="pagination">
+              <button className="page-btn" disabled={pagination.page===1} onClick={() => fetchApplications(pagination.page-1)}>←</button>
+              {[...Array(pagination.pages)].map((_,i) => <button key={i+1} className={`page-btn${pagination.page===i+1?' active':''}`} onClick={() => fetchApplications(i+1)}>{i+1}</button>)}
+              <button className="page-btn" disabled={pagination.page===pagination.pages} onClick={() => fetchApplications(pagination.page+1)}>→</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Application Detail Modal */}
+      {selected && (
+        <div className="modal-overlay" onClick={() => setSelected(null)}>
+          <div className="modal" style={{ maxWidth: 640 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Application: {selected.applicationId}</h2>
+              <button onClick={() => setSelected(null)} className="btn btn-ghost btn-icon"><FiX /></button>
+            </div>
+            <div className="modal-body" style={{ maxHeight:'60vh', overflowY:'auto' }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem', marginBottom:'1.5rem' }}>
+                {[
+                  ['Name', selected.fullName],
+                  ['Phone', selected.phone],
+                  ['Email', selected.email],
+                  ['Age', selected.age],
+                  ['Location', selected.location],
+                  ['Position', selected.position],
+                  ['Experience', `${selected.experience} years`],
+                  ['Expected Salary', `₹${selected.expectedSalary}`],
+                  ['Available From', selected.availableToJoin],
+                  ['Previous Employer', selected.previousEmployer || '—'],
+                ].map(([label, val]) => (
+                  <div key={label}>
+                    <div style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--secondary)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:2 }}>{label}</div>
+                    <div style={{ fontWeight:500, fontSize:'0.9rem' }}>{val}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="form-group">
+                <label className="form-label" style={{ textTransform:'uppercase', fontSize:'0.75rem', letterSpacing:'0.05em' }}>Skills</label>
+                <div style={{ background:'var(--bg-alt)', padding:'0.75rem', borderRadius:'var(--radius-sm)', fontSize:'0.875rem' }}>{selected.skills}</div>
+              </div>
+              {selected.previousSalonExperience && (
+                <div className="form-group">
+                  <label className="form-label" style={{ textTransform:'uppercase', fontSize:'0.75rem', letterSpacing:'0.05em' }}>Previous Experience</label>
+                  <div style={{ background:'var(--bg-alt)', padding:'0.75rem', borderRadius:'var(--radius-sm)', fontSize:'0.875rem' }}>{selected.previousSalonExperience}</div>
+                </div>
+              )}
+              {selected.portfolioUrl && (
+                <div className="form-group">
+                  <label className="form-label">Portfolio</label>
+                  <a href={selected.portfolioUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">{selected.portfolioUrl}</a>
+                </div>
+              )}
+              {selected.resume && (
+                <div className="form-group">
+                  <label className="form-label">Resume</label>
+                  <a href={`http://localhost:5000${selected.resume}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">📄 View Resume</a>
+                </div>
+              )}
+              <div className="divider" />
+              <div className="form-group">
+                <label className="form-label">Update Status</label>
+                <div style={{ display:'flex', gap:'0.375rem', flexWrap:'wrap' }}>
+                  {STATUSES.map(s => (
+                    <button key={s} onClick={() => handleUpdateStatus(selected._id, s)} disabled={updating || selected.status===s}
+                      className={`btn btn-sm ${selected.status===s?'btn-primary':'btn-ghost'}`}
+                      style={{ textTransform:'capitalize', borderRadius:'var(--radius-full)' }}>
+                      {s.replace('_',' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Admin Notes</label>
+                <textarea className="form-control" rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Add internal notes..." />
+              </div>
+              <button onClick={() => handleUpdateStatus(selected._id, selected.status)} className="btn btn-primary btn-sm" disabled={updating}>
+                {updating ? 'Saving...' : 'Save Notes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </AdminLayout>
+  );
+}
